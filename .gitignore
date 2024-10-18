@@ -10,3 +10,4 @@ build/
 include/PPP
 src/PPP
 test/
+.clang-format

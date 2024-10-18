@@ -15,7 +15,6 @@ target("library")
 target("test")
     set_kind("binary")
     add_files("src/calculator.cpp")
-	-- add_files("test/test.cpp")
 	add_deps("library")
 
 --
