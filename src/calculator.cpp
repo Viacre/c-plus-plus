@@ -14,7 +14,9 @@ primary();
 double
 term();
 double
-declaration();
+assignment();
+double
+definition();
 double
 statement();
 void
@@ -43,7 +45,7 @@ primary()
 		return -primary();
 	case '+':
 		return primary();
-	case cxx::name:
+	case cxx::variable:
 		return st.get(t.name);
 	default:
 		error("primary expected");
@@ -114,19 +116,31 @@ expression()
 	}
 }
 
-// declare a variable called "name” with the initial value "expression”
+// define a variable called "name” with the initial value "expression”
 double
-declaration()
+definition()
 {
 	Token t = ts.get();
-	if(t.kind != cxx::name)
-		error("name expected in declaration");
+	if(t.kind != cxx::variable)
+		error("name expected in definition");
 	string var_name = t.name;
-	Token t2 = ts.get();
-	if(t2.kind != '=')
-		error("= missing in declaration of ", var_name);
+
 	double d = expression();
-	st.declare(var_name, d);
+	st.define(var_name, d);
+	return d;
+}
+
+double
+assignment()
+{
+	Token t = ts.get();
+	if(t.kind != cxx::variable)
+		error("name expected in assignment");
+	string var_name = t.name;
+
+	double d = expression();
+
+	st.set(var_name, d);
 	return d;
 }
 
@@ -136,8 +150,10 @@ statement()
 	Token t = ts.get();
 	switch(t.kind)
 	{
-	case cxx::let:
-		return declaration();
+	case cxx::definition:
+		return definition();
+	case cxx::assignment:
+		return assignment();
 	default:
 		ts.putback(t);
 		return expression();
@@ -155,18 +171,21 @@ clean_up_mess()
 void
 calculate() // expression evaluation loop
 {
+	const string prompt = "> ";
+	const string result = "= ";
+
 	while(cin)
 		try
 		{
-			cout << cxx::prompt;
+			cout << prompt;
 			Token t = ts.get();
 			while(t.kind == cxx::print)
 				t = ts.get(); // first discard all “prints”
-			if(t.kind == cxx::quit)
+			if(t.kind == cxx::exit)
 				return;
 
 			ts.putback(t);
-			cout << cxx::result << statement() << '\n';
+			cout << result << statement() << '\n';
 		}
 		catch(exception& e)
 		{
@@ -182,8 +201,8 @@ try
 	cout << "Welcome to our simple calculator.\n"
 		 << "Please enter expressions using floating-point numbers.\n";
 
-	st.declare("pi", 3.1415926535);
-	st.declare("e", 2.7182818284);
+	st.define("pi", 3.1415926535);
+	st.define("e", 2.7182818284);
 
 	calculate();
 

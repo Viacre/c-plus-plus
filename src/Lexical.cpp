@@ -3,16 +3,6 @@
 namespace cxx
 {
 
-TokenCategory
-CategorizeToken(char id)
-{
-	if(isdigit(id) || id == '.')
-		return TokenCategory::Number;
-	if(ispunct(id))
-		return TokenCategory::Punctuator;
-	return TokenCategory::Identifier;
-}
-
 // The constructor just sets full to indicate that the buffer is empty:
 Token_stream::Token_stream() : full(false), buffer(0)
 {}
@@ -22,7 +12,7 @@ void
 Token_stream::putback(Token t)
 {
 	if(full)
-		error("putback() into a full buffer");
+		error("token_stream::putback() into a full buffer");
 	buffer = t; // copy t to buffer
 	full = true; // buffer is now full
 }
@@ -39,12 +29,11 @@ Token_stream::get()
 	}
 
 	char ch;
-	cin >> ch; // note that >> skips whitespace (space, newline, tab, etc.)
+	cin >> ch;
 
 	switch(ch)
 	{
-	case print: // deal with Symbol
-	case quit:
+	case print:
 	case '(':
 	case ')':
 	case '+':
@@ -54,7 +43,7 @@ Token_stream::get()
 	case '%':
 	case '=':
 		return Token{ch}; // let each character represent itself
-	case '.': // deal with Number
+	case '.':
 	case '0':
 	case '1':
 	case '2':
@@ -75,14 +64,20 @@ Token_stream::get()
 		{
 			string s;
 			s += ch;
-			while(cin.get(ch) && (isalpha(ch) || isdigit(ch)))
+			while(cin.get(ch) && (isalpha(ch) || isdigit(ch) || ch == '!'))
 				s += ch;
 			cin.putback(ch);
-			if(s == declkey)
-				return Token{let};
-			return Token{name, s};
+
+			if(s == define_key)
+				return Token{definition};
+			if(s == assign_key)
+				return Token{assignment};
+			if(s == exit_key)
+				return Token{exit};
+
+			return Token{variable, s};
 		}
-		error("token_istream::get: Bad token");
+		error("token_stream::get: Bad token");
 	}
 }
 
@@ -121,11 +116,11 @@ Symbol_table::set(string s, double d)
 			v.value = d;
 			return;
 		}
-	error("set_value: undefined variable ", s);
+	error("set: undefined variable ", s);
 }
 
 bool
-Symbol_table::is_declare(string var)
+Symbol_table::is_defined(string var)
 {
 	for(const auto& v: var_table)
 		if(v.name == var)
@@ -134,10 +129,10 @@ Symbol_table::is_declare(string var)
 }
 
 double
-Symbol_table::declare(string var, double val)
+Symbol_table::define(string var, double val)
 {
-	if(is_declare(var))
-		error(var, " declared twice");
+	if(is_defined(var))
+		error(var, " defined twice");
 	var_table.push_back(Variable{var, val});
 	return val;
 }

@@ -1,43 +1,31 @@
-#ifndef Lexical_hpp_
-#define Lexical_hpp_ 1
+#pragma once
 
 #include "std_lib_facilities.h"
 
 namespace cxx
 {
 
-enum class TokenCategory
-{
-	// Variable, Keyword
-	Identifier,
-	Number,
-	Punctuator
-};
-
-TokenCategory
-CategorizeToken(char id);
-
-const char number = '8';
-const char quit = 'q';
+// Token kind
+const char number = 'N';
+const char exit = 'Q';
+const char help = 'H';
 const char print = ';';
-const char let = 'L';
-const char name = 'a';
-const string declkey = "let";
-const string assignment = "set!";
-const string prompt = "> ";
-const string result = "= ";
+const char definition = 'D';
+const char assignment = 'A';
+const char variable = 'V';
+// Keyword
+const string define_key = "define";
+const string assign_key = "set!";
+const string exit_key = "exit";
+const string help_key = "help";
 
 struct Token
 {
-	using symbol_type = string;
-	using number_type = double;
-	using value_type = variant<symbol_type, number_type>;
-
 	char kind; // what kind of token
 	double value; // for numbers: a value
 	string name;
 
-	// Token() = delete;
+	Token() = delete;
 	explicit Token(char ch) : kind(ch), value(0) // Punctuator
 	{}
 	Token(char ch, double val) : kind(ch), value(val) // Number
@@ -80,14 +68,12 @@ public:
 	void
 	set(string s, double d);
 	bool
-	is_declare(string var);
+	is_defined(string var);
 	double
-	declare(string var, double val);
+	define(string var, double val);
 
 private:
 	vector<Variable> var_table;
 };
 
 }
-
-#endif

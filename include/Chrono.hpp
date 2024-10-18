@@ -1,5 +1,4 @@
-#ifndef YB_INC_ystdex_chrono_hpp_
-#define YB_INC_ystdex_chrono_hpp_ 1
+#pragma once
 
 #include "std_lib_facilities.h"
 
@@ -104,5 +103,3 @@ operator>>(istream& is, Date& dd);
 
 }
 // Chrono
-
-#endif

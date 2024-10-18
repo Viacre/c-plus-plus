@@ -1,4 +1,3 @@
-// Chrono.cpp
 #include "Chrono.hpp"
 
 namespace cxx
