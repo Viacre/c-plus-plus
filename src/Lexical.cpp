@@ -12,7 +12,7 @@ void
 Token_stream::putback(Token t)
 {
 	if(full)
-		error("token_stream::putback() into a full buffer");
+		throw runtime_error("token_stream::putback() into a full buffer");
 	buffer = t; // copy t to buffer
 	full = true; // buffer is now full
 }
@@ -64,7 +64,7 @@ Token_stream::get()
 		{
 			string s;
 			s += ch;
-			while(cin.get(ch) && (isalpha(ch) || isdigit(ch) || ch == '!'))
+			while(cin.get(ch) && (isalpha(ch) || isdigit(ch)))
 				s += ch;
 			cin.putback(ch);
 
@@ -77,7 +77,7 @@ Token_stream::get()
 
 			return Token{variable, s};
 		}
-		error("token_stream::get: Bad token");
+		throw runtime_error("token_stream::get: Bad token");
 	}
 }
 
@@ -99,12 +99,12 @@ Token_stream::ignore(char c)
 }
 
 double
-Symbol_table::get(string s)
+Symbol_table::get(const string& s) const
 {
 	for(const auto& v: var_table)
 		if(v.name == s)
 			return v.value;
-	error("get: undefined name ", s);
+	throw runtime_error("symbol_table::get: undefined name " + s);
 }
 
 void
@@ -116,7 +116,7 @@ Symbol_table::set(string s, double d)
 			v.value = d;
 			return;
 		}
-	error("set: undefined variable ", s);
+	throw runtime_error("symbol_table::set: undefined variable " + s);
 }
 
 bool
@@ -132,7 +132,7 @@ double
 Symbol_table::define(string var, double val)
 {
 	if(is_defined(var))
-		error(var, " defined twice");
+		throw runtime_error(var + " defined twice -- symbol_table::define");
 	var_table.push_back(Variable{var, val});
 	return val;
 }

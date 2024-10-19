@@ -8,14 +8,14 @@ set_toolchains("mingw")
 add_includedirs("include")
 add_includedirs("include/PPP")
 
-target("library")
+target("base")
 	set_kind("static")
 	add_files("src/Lexical.cpp")
 
 target("test")
     set_kind("binary")
     add_files("src/calculator.cpp")
-	add_deps("library")
+	add_deps("base")
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io

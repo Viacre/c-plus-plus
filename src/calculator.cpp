@@ -4,59 +4,65 @@ using cxx::Token;
 using cxx::Token_stream;
 using cxx::Symbol_table;
 
-Token_stream ts;
 Symbol_table st;
 
 double
-expression();
+expression(Token_stream&);
+
 double
-primary();
+primary(Token_stream&);
+
 double
-term();
+term(Token_stream&);
+
 double
-assignment();
+assignment(Token_stream&);
+
 double
-definition();
+definition(Token_stream&);
+
 double
-statement();
+statement(Token_stream&);
+
 void
-calculate();
+calculate(Token_stream&);
+
 void
-clean_up_mess();
+clean_up_mess(Token_stream&);
 
 // deal with numbers and parentheses
 double
-primary()
+primary(Token_stream& ts)
 {
 	Token t = ts.get();
 	switch(t.kind)
 	{
 	case '(': // handle '(' expression ')'
 	{
-		double d = expression();
+		double d = expression(ts);
 		t = ts.get();
 		if(t.kind != ')')
-			error("')' expected");
+			throw runtime_error("')' expected");
 		return d;
 	}
 	case cxx::number:
 		return t.value; // return the number's value
 	case '-':
-		return -primary();
+		return -primary(ts);
 	case '+':
-		return primary();
+		return primary(ts);
 	case cxx::variable:
 		return st.get(t.name);
 	default:
-		error("primary expected");
+		throw runtime_error("primary expected");
 	}
 }
 
 // deal with *, /, and %
 double
-term()
+term(Token_stream& ts)
 {
-	double left = primary();
+	double left = primary(ts);
 	Token t = ts.get(); // get the next token from token stream
 
 	while(true)
@@ -64,21 +70,21 @@ term()
 		switch(t.kind)
 		{
 		case '*':
-			left *= primary();
+			left *= primary(ts);
 			t = ts.get();
 			break;
 		case '/': {
-			double d = primary();
+			double d = primary(ts);
 			if(d == 0)
-				error("divide by zero");
+				throw runtime_error("divide by zero");
 			left /= d;
 			t = ts.get();
 			break;
 		}
 		case '%': {
-			double d = primary();
+			double d = primary(ts);
 			if(d == 0)
-				error("%: divide by zero");
+				throw runtime_error("%: divide by zero");
 			left = fmod(left, d);
 			t = ts.get();
 			break;
@@ -92,9 +98,9 @@ term()
 
 // deal with + and -
 double
-expression()
+expression(Token_stream& ts)
 {
-	double left = term(); // read and evaluate a Term
+	double left = term(ts); // read and evaluate a Term
 	Token t = ts.get(); // get the next token from token stream
 
 	while(true)
@@ -102,11 +108,11 @@ expression()
 		switch(t.kind)
 		{
 		case '+':
-			left += term(); // evaluate Term and add
+			left += term(ts); // evaluate Term and add
 			t = ts.get();
 			break;
 		case '-':
-			left -= term(); // evaluate Term and subtract
+			left -= term(ts); // evaluate Term and subtract
 			t = ts.get();
 			break;
 		default:
@@ -118,50 +124,50 @@ expression()
 
 // define a variable called "name” with the initial value "expression”
 double
-definition()
+definition(Token_stream& ts)
 {
 	Token t = ts.get();
 	if(t.kind != cxx::variable)
-		error("name expected in definition");
+		throw runtime_error("name expected in definition");
 	string var_name = t.name;
 
-	double d = expression();
+	double d = expression(ts);
 	st.define(var_name, d);
 	return d;
 }
 
 double
-assignment()
+assignment(Token_stream& ts)
 {
 	Token t = ts.get();
 	if(t.kind != cxx::variable)
-		error("name expected in assignment");
+		throw runtime_error("name expected in assignment");
 	string var_name = t.name;
 
-	double d = expression();
+	double d = expression(ts);
 
 	st.set(var_name, d);
 	return d;
 }
 
 double
-statement()
+statement(Token_stream& ts)
 {
 	Token t = ts.get();
 	switch(t.kind)
 	{
 	case cxx::definition:
-		return definition();
+		return definition(ts);
 	case cxx::assignment:
-		return assignment();
+		return assignment(ts);
 	default:
 		ts.putback(t);
-		return expression();
+		return expression(ts);
 	}
 }
 
 void
-clean_up_mess()
+clean_up_mess(Token_stream& ts)
 {
 	ts.ignore(cxx::print);
 }
@@ -169,7 +175,7 @@ clean_up_mess()
 //------------------------------------------------------------------------------
 
 void
-calculate() // expression evaluation loop
+calculate(Token_stream& ts) // expression evaluation loop
 {
 	const string prompt = "> ";
 	const string result = "= ";
@@ -185,12 +191,12 @@ calculate() // expression evaluation loop
 				return;
 
 			ts.putback(t);
-			cout << result << statement() << '\n';
+			cout << result << statement(ts) << '\n';
 		}
 		catch(exception& e)
 		{
 			cerr << e.what() << "\n";
-			clean_up_mess();
+			clean_up_mess(ts);
 		}
 }
 
@@ -201,10 +207,11 @@ try
 	cout << "Welcome to our simple calculator.\n"
 		 << "Please enter expressions using floating-point numbers.\n";
 
+	Token_stream ts;
 	st.define("pi", 3.1415926535);
 	st.define("e", 2.7182818284);
 
-	calculate();
+	calculate(ts);
 
 	keep_window_open();
 	return 0;

@@ -15,7 +15,7 @@ const char assignment = 'A';
 const char variable = 'V';
 // Keyword
 const string define_key = "define";
-const string assign_key = "set!";
+const string assign_key = "set";
 const string exit_key = "exit";
 const string help_key = "help";
 
@@ -64,7 +64,7 @@ class Symbol_table
 {
 public:
 	double
-	get(string s);
+	get(const string& s) const;
 	void
 	set(string s, double d);
 	bool
