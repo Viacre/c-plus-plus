@@ -6,18 +6,18 @@ namespace cxx
 {
 
 // Token kind
-const char number = 'N';
-const char exit = 'Q';
-const char help = 'H';
-const char print = ';';
-const char definition = 'D';
-const char assignment = 'A';
-const char variable = 'V';
+constexpr char number = 'N';
+constexpr char exit = 'Q';
+constexpr char help = 'H';
+constexpr char print = ';';
+constexpr char definition = 'D';
+constexpr char assignment = 'A';
+constexpr char variable = 'V';
 // Keyword
-const string define_key = "define";
-const string assign_key = "set";
-const string exit_key = "exit";
-const string help_key = "help";
+constexpr string_view define_key = "define";
+constexpr string_view assign_key = "set";
+constexpr string_view exit_key = "exit";
+constexpr string_view help_key = "help";
 
 struct Token
 {
@@ -31,7 +31,7 @@ struct Token
 	Token(char ch, double val) : kind(ch), value(val) // Number
 	{}
 	Token(char ch, string n) : kind(ch), name(n) // Identifier
-	{}
+	{}                                                                                                     
 };
 
 class Token_stream
@@ -51,29 +51,26 @@ private:
 	Token buffer; // here is where we keep a Token put back using putback()
 };
 
-struct Variable
-{
-	string name;
-	double value;
-	bool is_const;
-	Variable(string n, double v) : name(n), value(v)
-	{}
-};
-
-class Symbol_table
+class Environment
 {
 public:
-	double
-	get(const string& s) const;
-	void
-	set(string s, double d);
+	using BindingMap = unordered_map<string, double>;
+
+	Environment() = default;
+	
 	bool
-	is_defined(string var);
+	IsDefined(string_view id) const;
 	double
-	define(string var, double val);
+	Lookup(string_view id) const;
+
+	
+	void
+	SetValue(string_view id, double val);
+	void
+	Define(string_view id, double val);
 
 private:
-	vector<Variable> var_table;
+	BindingMap bindings;
 };
 
 }

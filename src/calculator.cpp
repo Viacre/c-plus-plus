@@ -2,9 +2,9 @@
 
 using cxx::Token;
 using cxx::Token_stream;
-using cxx::Symbol_table;
+using cxx::Environment;
 
-Symbol_table st;
+Environment env;
 
 double
 expression(Token_stream&);
@@ -30,7 +30,7 @@ calculate(Token_stream&);
 void
 clean_up_mess(Token_stream&);
 
-// deal with numbers and parentheses
+// deal with numbers, parentheses, and variables
 double
 primary(Token_stream& ts)
 {
@@ -46,13 +46,13 @@ primary(Token_stream& ts)
 		return d;
 	}
 	case cxx::number:
-		return t.value; // return the number's value
+		return t.value;
 	case '-':
 		return -primary(ts);
 	case '+':
 		return primary(ts);
 	case cxx::variable:
-		return st.get(t.name);
+		return env.Lookup(t.name);
 	default:
 		throw runtime_error("primary expected");
 	}
@@ -132,7 +132,7 @@ definition(Token_stream& ts)
 	string var_name = t.name;
 
 	double d = expression(ts);
-	st.define(var_name, d);
+	env.Define(var_name, d);
 	return d;
 }
 
@@ -146,7 +146,7 @@ assignment(Token_stream& ts)
 
 	double d = expression(ts);
 
-	st.set(var_name, d);
+	env.SetValue(var_name, d);
 	return d;
 }
 
@@ -177,8 +177,8 @@ clean_up_mess(Token_stream& ts)
 void
 calculate(Token_stream& ts) // expression evaluation loop
 {
-	const string prompt = "> ";
-	const string result = "= ";
+	constexpr string_view prompt{"> "};
+	constexpr string_view result{"= "};
 
 	while(cin)
 		try
@@ -208,8 +208,8 @@ try
 		 << "Please enter expressions using floating-point numbers.\n";
 
 	Token_stream ts;
-	st.define("pi", 3.1415926535);
-	st.define("e", 2.7182818284);
+	env.Define("pi", 3.1415926535);
+	env.Define("e", 2.7182818284);
 
 	calculate(ts);
 

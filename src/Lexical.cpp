@@ -99,42 +99,41 @@ Token_stream::ignore(char c)
 }
 
 double
-Symbol_table::get(const string& s) const
+Environment::Lookup(string_view id) const
 {
-	for(const auto& v: var_table)
-		if(v.name == s)
-			return v.value;
-	throw runtime_error("symbol_table::get: undefined name " + s);
+	if(IsDefined(id))
+		return bindings.at({id.data(), id.size()});
+
+	throw runtime_error(
+		format("Environment::Lookup: Unknown identifier: '{}'.", id));
 }
 
 void
-Symbol_table::set(string s, double d)
-{ // set the Variable named s to d
-	for(auto& v: var_table)
-		if(v.name == s)
-		{
-			v.value = d;
-			return;
-		}
-	throw runtime_error("symbol_table::set: undefined variable " + s);
+Environment::SetValue(string_view id, double val)
+{
+	if(IsDefined(id))
+	{
+		bindings[{id.data(), id.size()}] = val;
+		return;
+	}
+	throw runtime_error(
+		format("Environment::SetValue: Unknown identifier: '{}'.", id));
 }
 
 bool
-Symbol_table::is_defined(string var)
+Environment::IsDefined(string_view id) const
 {
-	for(const auto& v: var_table)
-		if(v.name == var)
-			return true;
-	return false;
+	return bindings.find({id.data(), id.size()}) != bindings.end();
 }
 
-double
-Symbol_table::define(string var, double val)
+void
+Environment::Define(string_view id, double val)
 {
-	if(is_defined(var))
-		throw runtime_error(var + " defined twice -- symbol_table::define");
-	var_table.push_back(Variable{var, val});
-	return val;
+	if(IsDefined(id))
+		throw runtime_error(
+			format("Environment::Define: Duplicate identifier: '{}'.", id));
+
+	bindings.insert({{id.data(), id.size()}, val});
 }
 
 

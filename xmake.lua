@@ -1,21 +1,39 @@
 set_project("modern-cxx")
 
+-- for all source/target encodings
+set_encodings("utf-8") -- msvc: /utf-8
+
+if is_os("windows") then
+    add_defines("_CRT_SECURE_NO_WARNINGS")
+end
+
+add_rules("plugin.compile_commands.autoupdate", {outputdir = ".vscode"})
+
 add_rules("mode.debug", "mode.release")
 
-set_languages("c11", "cxx17")
-set_toolchains("mingw")
+set_languages("c++14")
+-- set_toolchains("clang")
 
 add_includedirs("include")
 add_includedirs("include/PPP")
 
-target("base")
-	set_kind("static")
-	add_files("src/Lexical.cpp")
+add_requires("pacman::fltk", {system = true, alias = "fltk"})
+add_requires("pacman::boost", {system = true, alias = "boost"})
+add_requires("pacman::fmt", {system = true, alias = "fmt"})
+
+add_packages("boost")
+add_packages("fmt")
+
+-- target("base")
+-- 	set_kind("static")
+-- 	add_files("src/Chrono.cpp")
 
 target("test")
     set_kind("binary")
-    add_files("src/calculator.cpp")
-	add_deps("base")
+	add_files("test/test.cpp")
+    -- add_files("src/calculator.cpp")
+	-- add_files("test/manipulator.cpp")
+	-- add_deps("base")
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
