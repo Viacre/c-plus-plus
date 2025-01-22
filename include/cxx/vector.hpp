@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <limits>
 #include <cassert>
-#include "cxx/meta.hpp"
+#include "meta.hpp"
 #include <iostream>
 
 namespace cxx
@@ -107,9 +107,14 @@ public:
 	vector_rep() = default;
 	vector_rep(const allocator_type& a) noexcept : objects(elem_allocator(a))
 	{}
-	vector_rep(const vector_rep& x) : objects(x.objects)
+	vector_rep(size_type n)
 	{
-		init_range(x.begin(), x.end());
+		create_storage(n);
+	}
+	vector_rep(size_type n, const allocator_type& a)
+		: objects(elem_allocator(a))
+	{
+		create_storage(n);
 	}
 	vector_rep(vector_rep&&) = default;
 	vector_rep(vector_rep&& x, const allocator_type& a) noexcept(
@@ -119,14 +124,26 @@ public:
 	{}
 
 private:
-	vector_rep(vector_rep&& x, elem_allocator a, std::true_type) noexcept
+	vector_rep(vector_rep&& x, elem_allocator a, true_) noexcept
 		: objects(std::move(x.objects), std::move(a))
 	{}
-	vector_rep(vector_rep&& x, elem_allocator a, std::false_type)
-		: objects(std::move(a))
-	{}
+	vector_rep(vector_rep&& x, elem_allocator a, false_) : objects(std::move(a))
+	{
+		if(get_elem_allocator() == x.get_elem_allocator())
+			objects.header.swap_data(x.objects.header);
+		else
+			insert_range(begin(), std::make_move_iterator(x.begin()),
+				std::make_move_iterator(x.end()));
+	}
 
 private:
+	void
+	create_storage(size_type n)
+	{
+		objects.header.data = allocate_storage(n);
+		objects.header.size = 0;
+		objects.header.capacity = n;
+	}
 	pointer
 	allocate_storage(size_type n)
 	{
@@ -178,7 +195,6 @@ public:
 	void
 	init_range(_tIn first, _tIn last)
 	{
-		reserve(std::distance(first, last));
 		for(; first != last; ++first)
 			insert_it(end(), *first);
 	}
@@ -449,37 +465,39 @@ public:
 	explicit vector(const allocator_type& a) noexcept : rep(a)
 	{}
 	explicit vector(size_type n, const allocator_type& a = allocator_type())
-		: rep(a)
+		: rep(n, a)
 	{
-		reserve(n);
 		for(; n != 0; --n)
 			emplace_back();
 	}
 	vector(size_type n, const value_type& val,
 		const allocator_type& a = allocator_type())
-		: rep(a)
+		: rep(n, a)
 	{
 		init_fill(n, val);
 	}
 	template<typename _tIn, typename = enable_for_input_iterator_t<_tIn>>
 	vector(_tIn first, _tIn last, const allocator_type& a = allocator_type())
-		: rep(a)
+		: rep(std::distance(first, last), a)
 	{
 		init_range(first, last);
 	}
 	vector(std::initializer_list<value_type> il,
 		const allocator_type& a = allocator_type())
-		: rep(a)
+		: rep(il.size(), a)
 	{
 		init_range(il.begin(), il.end());
 	}
-	vector(const vector& x) = default;
-	vector(const vector& x, const allocator_type& a) : rep(a)
+	vector(const vector& x) : rep(x.size())
 	{
 		init_range(x.begin(), x.end());
 	}
-	// vector(vector&& x) = default;
-	// vector(vector&& x, const allocator_type& a);
+	vector(const vector& x, const allocator_type& a) : rep(x.size(), a)
+	{
+		init_range(x.begin(), x.end());
+	}
+	vector(vector&&) = default;
+	vector(vector&& x, const allocator_type& a);
 
 public:
 	~vector() = default;
@@ -515,7 +533,6 @@ private:
 	void
 	init_fill(size_type n, const value_type& val)
 	{
-		reserve(n);
 		for(; n != 0; --n)
 			push_back(val);
 	}

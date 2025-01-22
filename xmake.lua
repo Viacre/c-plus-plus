@@ -15,7 +15,7 @@ set_languages("c++14")
 -- set_toolchains("clang")
 
 add_includedirs("include")
-add_includedirs("include/PPP")
+add_includedirs("include/draft/PPP")
 
 add_requires("pacman::fltk", {system = true, alias = "fltk"})
 add_requires("pacman::boost", {system = true, alias = "boost"})

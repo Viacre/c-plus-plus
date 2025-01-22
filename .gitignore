@@ -9,7 +9,6 @@ build/
 # C++
 include/draft
 src/draft
-test/
 
 # Clang
 .cache/
